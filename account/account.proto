@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package account;
+
 option go_package = "./account";
 
 service AccountService {
@@ -14,20 +15,16 @@ message GetAccountRequest {
 }
 
 message GetAccountResponse {
-    float gastoken_balance = 1;
-    int64 wallet_nonce = 2;
+    string gastoken_balance = 1;
+    string wallet_nonce = 2;
 }
 
 message GetAccountsRequest {
-    repeated string ethereum_addresses = 1;
-    string erc20_token_address = 2;
-}
-
-message GetAccountBalance {
-    string ethereum_address = 1;
-    float erc20_balance = 2;
+  repeated string ethereum_addresses = 1;
+  string erc20_token_address = 2;
 }
 
 message GetAccountsResponse {
-    repeated GetAccountBalance balances = 1;
+  string ethereum_address = 1;
+  uint64 erc20_balance = 2;
 }
