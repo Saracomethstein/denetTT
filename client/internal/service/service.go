@@ -15,22 +15,33 @@ type WalletStruct struct {
 	Signature string
 }
 
-var Addresses = GenerateAddresses(10000)
+var Addresses = GenerateWallets(10000)
 
-func CreateAndSignWallet() (*WalletStruct, error) {
+func GenerateWallets(n int) []string {
+	addresses := make([]string, n)
+	for i := 0; i < n; i++ {
+		address, err := generateAddress()
+		if err != nil {
+			log.Printf("Failed to generate address: %v", err)
+			continue
+		}
+		addresses[i] = address
+	}
+	return addresses
+}
+
+func GenerateAndSignWallet() (*WalletStruct, error) {
 	privateKey, err := crypto.GenerateKey()
 	if err != nil {
 		return nil, err
 	}
 
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return nil, errors.New("error casting public key to ECDSA")
+	address, err := deriveAddress(privateKey)
+	if err != nil {
+		return nil, err
 	}
 
-	address := crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
-	signature, err := SignData(privateKey, []byte(address))
+	signature, err := signData(privateKey, []byte(address))
 	if err != nil {
 		return nil, err
 	}
@@ -41,23 +52,25 @@ func CreateAndSignWallet() (*WalletStruct, error) {
 	}, nil
 }
 
-func SignData(privateKey *ecdsa.PrivateKey, data []byte) ([]byte, error) {
-	hash := crypto.Keccak256Hash(data)
-	return crypto.Sign(hash.Bytes(), privateKey)
+func generateAddress() (string, error) {
+	privateKey, err := crypto.GenerateKey()
+	if err != nil {
+		return "", err
+	}
+	return deriveAddress(privateKey)
 }
 
-func GenerateAddresses(n int) []string {
-	addresses := make([]string, n)
-	for i := 0; i < n; i++ {
-		privateKey, err := crypto.GenerateKey()
-		if err != nil {
-			log.Fatalf("Failed to generate private key: %v", err)
-		}
-
-		address := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
-		addresses[i] = address
+func deriveAddress(privateKey *ecdsa.PrivateKey) (string, error) {
+	publicKey, ok := privateKey.Public().(*ecdsa.PublicKey)
+	if !ok {
+		return "", errors.New("error casting public key to ECDSA")
 	}
-	return addresses
+	return crypto.PubkeyToAddress(*publicKey).Hex(), nil
+}
+
+func signData(privateKey *ecdsa.PrivateKey, data []byte) ([]byte, error) {
+	hash := crypto.Keccak256Hash(data)
+	return crypto.Sign(hash.Bytes(), privateKey)
 }
 
 func ChunkAddresses(addresses []string, chunkSize int) [][]string {
@@ -78,7 +91,7 @@ func LoadConfig() string {
 	viper.SetConfigType("yaml")
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config file, %v", err)
+		log.Fatalf("Error reading config file: %v", err)
 	}
 	return viper.GetString("server_port")
 }

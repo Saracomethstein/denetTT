@@ -21,13 +21,13 @@ func main() {
 
 	client := account.NewAccountServiceClient(conn)
 
-	wallet, err := service.CreateAndSignWallet()
+	wallet, err := service.GenerateAndSignWallet()
 	if err != nil {
 		log.Fatalf("failed to create and sign wallet: %v", err)
 	}
 
 	run.GetAccount(client, wallet)
-	run.GetAccounts(client, 100)
-	run.GetAccounts(client, 1000)
-	run.GetAccounts(client, 10000)
+	run.GetAccounts(client, 20, 5)
+	run.GetAccounts(client, 200, 5)
+	run.GetAccounts(client, 2000, 5)
 }

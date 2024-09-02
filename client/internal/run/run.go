@@ -36,8 +36,8 @@ func GetAccount(client account.AccountServiceClient, wallet *service.WalletStruc
 	fmt.Printf("GetAccount took %s\n", time.Since(start))
 }
 
-func GetAccounts(client account.AccountServiceClient, totalRequests int) {
-	fmt.Printf("\nRunning test with %d total requests...\n", totalRequests)
+func GetAccounts(client account.AccountServiceClient, totalRequests int, tokenCount int) {
+	fmt.Printf("\nRunning test with %d total requests and %d tokens...\n", totalRequests, tokenCount)
 	start := time.Now()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Minute)
@@ -48,12 +48,13 @@ func GetAccounts(client account.AccountServiceClient, totalRequests int) {
 		log.Fatalf("Failed to start stream: %v", err)
 	}
 
-	addressChunks := service.ChunkAddresses(service.Addresses[:totalRequests], totalRequests/len(tokens))
+	selectedTokens := selectTokens(tokenCount)
+	addressChunks := service.ChunkAddresses(service.Addresses[:totalRequests], totalRequests/len(selectedTokens))
 
 	var wg sync.WaitGroup
-	sem := make(chan struct{}, 5)
+	sem := make(chan struct{}, 10)
 
-	for _, token := range tokens {
+	for _, token := range selectedTokens {
 		for _, chunk := range addressChunks {
 			wg.Add(1)
 			sem <- struct{}{}
@@ -81,7 +82,15 @@ func GetAccounts(client account.AccountServiceClient, totalRequests int) {
 
 	handleResponses(stream, totalRequests)
 
-	fmt.Printf("Test with %d total requests took %s\n", totalRequests, time.Since(start))
+	elapsed := time.Since(start)
+	fmt.Printf("Test with %d total requests and %d tokens took %s\n", totalRequests, tokenCount, elapsed)
+}
+
+func selectTokens(count int) []string {
+	if count > len(tokens) {
+		count = len(tokens)
+	}
+	return tokens[:count]
 }
 
 func handleResponses(stream account.AccountService_GetAccountsClient, totalRequests int) {
