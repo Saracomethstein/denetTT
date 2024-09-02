@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/spf13/viper"
 )
 
 func InitEthereumClient(InfuraURL string) *ethclient.Client {
@@ -87,4 +88,15 @@ func GetERC20Balance(client *ethclient.Client, address, tokenAddress common.Addr
 	}
 
 	return balance.Uint64(), nil
+}
+
+func LoadConfig() (string, string) {
+	viper.SetConfigName("config")
+	viper.AddConfigPath("server/config")
+	viper.SetConfigType("yaml")
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Error reading config file, %v", err)
+	}
+	return viper.GetString("infura_url"), viper.GetString("server_port")
 }

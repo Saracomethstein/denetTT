@@ -7,21 +7,11 @@ import (
 	"log"
 	"net"
 
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	viper.SetConfigName("config")
-	viper.AddConfigPath("../config")
-	viper.SetConfigType("yaml")
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config file, %v", err)
-	}
-
-	infuraURL := viper.GetString("infura_url")
-	serverPort := viper.GetString("server_port")
+	infuraURL, serverPort := service.LoadConfig()
 
 	client := service.InitEthereumClient(infuraURL)
 
