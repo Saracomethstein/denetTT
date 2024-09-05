@@ -15,7 +15,7 @@
     make server
     ``` 
    
-4. Open new shell and start client:
+4. Open a new shell and start client:
     ```sh
     make client
     ```
